@@ -647,6 +647,7 @@
         <div class="modal-title" id="dTitle"></div>
         <div class="modal-sub" id="dSub"></div>
       </div>
+      <button class="btn btn-danger btn-sm" id="deleteBtn" onclick="deleteProject()" style="display:none">🗑 Delete</button>
       <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
     </div>
     <div class="modal-tabs">
@@ -1107,6 +1108,9 @@ function renderDetailModal() {
 
   document.getElementById('dTitle').textContent = p.name;
   document.getElementById('dSub').innerHTML   = `${p.client} &nbsp;·&nbsp; ${p.company} &nbsp;·&nbsp; ${p.id}`;
+  // Show delete button only for delivered (stage 7) projects, or admin can delete any
+  const deleteBtn = document.getElementById('deleteBtn');
+  deleteBtn.style.display = (p.stage === 7 || role === 'admin') ? '' : 'none';
 
   // ── Timeline tab ──
   let tl = '<div class="timeline">';
@@ -1240,6 +1244,17 @@ function advanceStage() {
   document.getElementById('tab-timeline').style.display = '';
   document.getElementById('tab-details').style.display  = 'none';
   document.getElementById('tab-action').style.display   = 'none';
+}
+
+// ── Delete project ─────────────────────────────────────────
+function deleteProject() {
+  const p = projects.find(x => x.id === activeProjectId);
+  if (!p) return;
+  const label = p.stage === 7 ? 'delivered project' : 'project';
+  if (!confirm(`Delete "${p.name}"?\n\nThis ${label} will be permanently removed and cannot be undone.`)) return;
+  projects = projects.filter(x => x.id !== activeProjectId);
+  closeModal('detailModal');
+  render();
 }
 
 // ── Keyboard close ─────────────────────────────────────────
