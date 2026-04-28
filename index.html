@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Album Flow — Wedding Album Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  /* ── Reset & Variables ─────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #F5F2EE;
+    --surface:   #FFFFFF;
+    --border:    #E0DAD3;
+    --text:      #1A1714;
+    --muted:     #7A7470;
+    --accent:    #B5804A;
+    --accent-lt: #F0E8DC;
+    --france:    #3B6DB0;
+    --france-lt: #EAF0F9;
+    --india:     #2E8B6A;
+    --india-lt:  #E4F5EE;
+    --danger:    #C04A3A;
+    --danger-lt: #FAEAE8;
+    --warn:      #B5804A;
+    --warn-lt:   #F0E8DC;
+    --done:      #2E8B6A;
+    --done-lt:   #E4F5EE;
+
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 12px rgba(0,0,0,0.05);
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Layout ────────────────────────────────────────────── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── Sidebar ───────────────────────────────────────────── */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo h1 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .sidebar-logo span { color: var(--accent); }
+  .sidebar-logo p { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+
+  .sidebar-nav { padding: 12px 0; flex: 1; overflow-y: auto; }
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 20px 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--accent-lt); color: var(--accent); font-weight: 500; }
+  .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 1px 7px;
+  }
+
+  .sidebar-role {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .role-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .role-select {
+    width: 100%;
+    margin-top: 5px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    padding: 5px 8px;
+    cursor: pointer;
+  }
+  .role-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ── Main ──────────────────────────────────────────────── */
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .topbar-title { font-family: var(--font-display); font-size: 22px; flex: 1; }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    font-family: var(--font-body);
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    padding: 7px 14px 7px 34px;
+    width: 220px;
+    color: var(--text);
+    transition: border-color 0.15s, width 0.2s;
+  }
+  .search-wrap input:focus { outline: none; border-color: var(--accent); width: 260px; }
+  .search-wrap .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: none;
+  }
+  .btn {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--r-sm);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm { font-size: 12px; padding: 5px 12px; }
+  .btn-danger { background: var(--danger-lt); color: var(--danger); border: 1px solid #f0c4be; }
+
+  .content { padding: 24px 28px; flex: 1; }
+
+  /* ── Stat Cards ────────────────────────────────────────── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .stat-card .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; }
+  .stat-card .stat-value { font-family: var(--font-display); font-size: 30px; margin: 4px 0 0; line-height: 1; }
+  .stat-card .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .stat-card.highlight { border-left: 3px solid var(--accent); }
+
+  /* ── Filters ───────────────────────────────────────────── */
+  .filters-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-pill {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 5px 14px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .filter-pill.france-pill.active { background: var(--france); border-color: var(--france); color: #fff; }
+  .filter-pill.india-pill.active { background: var(--india); border-color: var(--india); color: #fff; }
+  .filters-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  select.sort-select {
+    font-family: var(--font-body);
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 5px 10px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  select.sort-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ── Project Table ─────────────────────────────────────── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg);
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #FAF8F6; }
+  tbody td { padding: 12px 16px; vertical-align: middle; }
+
+  .proj-name { font-weight: 500; font-size: 13px; color: var(--text); }
+  .proj-client { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .proj-date { font-size: 12px; color: var(--muted); }
+
+  /* ── Stage Badge ───────────────────────────────────────── */
+  .stage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+  .stage-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .stage-1  { background: #EAF0F9; color: #2C5899; } .stage-1 .stage-dot  { background: #3B6DB0; }
+  .stage-2  { background: #E9F5F1; color: #206050; } .stage-2 .stage-dot  { background: #2E8B6A; }
+  .stage-3  { background: #EAF0F9; color: #2C5899; } .stage-3 .stage-dot  { background: #3B6DB0; }
+  .stage-4  { background: #E9F5F1; color: #206050; } .stage-4 .stage-dot  { background: #2E8B6A; }
+  .stage-5  { background: #FDF4E8; color: #8A5C1A; } .stage-5 .stage-dot  { background: #B5804A; }
+  .stage-6  { background: #FAEAE8; color: #943020; } .stage-6 .stage-dot  { background: #C04A3A; }
+  .stage-7  { background: #E4F5EE; color: #1A6044; } .stage-7 .stage-dot  { background: #2E8B6A; }
+  .stage-done { background: #E4F5EE; color: #1A6044; } .stage-done .stage-dot { background: #2E8B6A; }
+
+  /* ── Progress Pipeline ─────────────────────────────────── */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: 200px;
+  }
+  .pip-step {
+    width: 22px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    transition: background 0.3s;
+  }
+  .pip-step.done  { background: var(--done); }
+  .pip-step.active { background: var(--accent); }
+  .pip-sep { width: 4px; flex-shrink: 0; }
+  .pip-label { font-size: 10px; color: var(--muted); margin-left: 8px; white-space: nowrap; }
+
+  /* ── Location chip ─────────────────────────────────────── */
+  .loc-chip {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+  }
+  .loc-fr { background: var(--france-lt); color: var(--france); }
+  .loc-in { background: var(--india-lt);  color: var(--india); }
+
+  /* ── Empty state ───────────────────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Modal ─────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,23,20,0.45);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    width: 100%;
+    max-width: 680px;
+    max-height: 88vh;
+    overflow-y: auto;
+    animation: slideUp 0.18s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .modal-header-info { flex: 1; }
+  .modal-title { font-family: var(--font-display); font-size: 20px; line-height: 1.2; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--bg); }
+
+  .modal-body { padding: 20px 24px; }
+
+  /* ── Timeline in modal ─────────────────────────────────── */
+  .timeline { position: relative; }
+  .tl-item {
+    display: flex;
+    gap: 14px;
+    padding-bottom: 20px;
+    position: relative;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; width: 32px; flex-shrink: 0; }
+  .tl-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .tl-dot.done    { background: var(--done-lt);   color: var(--done);   border: 2px solid var(--done); }
+  .tl-dot.active  { background: var(--accent-lt); color: var(--accent); border: 2px solid var(--accent); box-shadow: 0 0 0 3px rgba(181,128,74,0.15); }
+  .tl-dot.pending { background: var(--bg);        color: var(--muted);  border: 2px solid var(--border); }
+  .tl-line {
+    width: 2px;
+    flex: 1;
+    background: var(--border);
+    margin-top: 4px;
+    min-height: 20px;
+  }
+  .tl-line.done { background: var(--done); }
+  .tl-content { flex: 1; padding-top: 4px; }
+  .tl-stage-name { font-size: 13px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .tl-stage-name.pending { color: var(--muted); }
+  .tl-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tl-actor { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .tl-note {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* ── Action panel in modal ─────────────────────────────── */
+  .action-panel {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+  }
+  .action-panel h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .action-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+  .form-group label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-family: var(--font-body);
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 7px 10px;
+    background: var(--bg);
+    color: var(--text);
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+  /* ── New Project Form ──────────────────────────────────── */
+  .new-proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .new-proj-grid .full { grid-column: 1 / -1; }
+
+  /* ── Alerts ────────────────────────────────────────────── */
+  .alert {
+    border-radius: var(--r-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alert-info { background: var(--france-lt); color: var(--france); border: 1px solid #bad0ee; }
+  .alert-warn { background: var(--warn-lt); color: var(--warn); border: 1px solid #e2c898; }
+  .alert-success { background: var(--done-lt); color: var(--done); border: 1px solid #a8d9c4; }
+
+  /* ── Modal tabs ────────────────────────────────────────── */
+  .modal-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin: 0 24px; }
+  .modal-tab {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    transition: color 0.15s;
+  }
+  .modal-tab:hover { color: var(--text); }
+  .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Info grid ─────────────────────────────────────────── */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-bottom: 18px; }
+  .info-item .info-key { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 2px; }
+  .info-item .info-val { font-size: 13px; font-weight: 500; color: var(--text); }
+
+  /* ── Responsive ────────────────────────────────────────── */
+  @media (max-width: 800px) {
+    .sidebar { display: none; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .new-proj-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Scrollbar ─────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .text-danger { color: var(--danger); }
+  .text-done   { color: var(--done); }
+  .text-accent { color: var(--accent); }
+  .fw500 { font-weight: 500; }
+  .mt4  { margin-top: 4px; }
+  .mt8  { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mb0  { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Album<span>Flow</span></h1>
+      <p>Wedding Album Tracker</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Views</div>
+      <button class="nav-item active" onclick="setView('all')">
+        <span class="nav-icon">📋</span> All Projects
+        <span class="nav-badge" id="badge-all">0</span>
+      </button>
+      <button class="nav-item" onclick="setView('active')">
+        <span class="nav-icon">⚡</span> Active
+        <span class="nav-badge" id="badge-active" style="display:none"></span>
+      </button>
+      <button class="nav-item" onclick="setView('myaction')">
+        <span class="nav-icon">🎯</span> Needs My Action
+        <span class="nav-badge" id="badge-myaction" style="display:none"></span>
+      </button>
+      <button class="nav-item" onclick="setView('delivered')">
+        <span class="nav-icon">✅</span> Delivered
+      </button>
+      <div class="nav-section-label" style="margin-top:8px">Location</div>
+      <button class="nav-item" onclick="setView('france')">
+        <span class="nav-icon">🇫🇷</span> France Stage
+      </button>
+      <button class="nav-item" onclick="setView('india')">
+        <span class="nav-icon">🇮🇳</span> India Stage
+      </button>
+    </nav>
+    <div class="sidebar-role">
+      <div class="role-label">Viewing as</div>
+      <select class="role-select" id="roleSelect" onchange="onRoleChange()">
+        <option value="admin">Admin (All Access)</option>
+        <option value="photographer">📸 Photographer (France)</option>
+        <option value="designer">🎨 Designer (India)</option>
+        <option value="client">💍 Client (France)</option>
+        <option value="press">🖨️ Print Press (India)</option>
+        <option value="validator">✔️ Validation Agent</option>
+        <option value="fedex">📦 FedEx Agent</option>
+      </select>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="viewTitle">All Projects</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search projects..." oninput="renderTable()"/>
+      </div>
+      <button class="btn btn-primary" onclick="openNewProject()">＋ New Project</button>
+    </div>
+
+    <div class="content">
+      <!-- Stat cards -->
+      <div class="stats-row" id="statsRow"></div>
+
+      <!-- Filters -->
+      <div class="filters-row">
+        <button class="filter-pill active" onclick="setStageFilter('all', this)">All Stages</button>
+        <button class="filter-pill" onclick="setStageFilter(1, this)">1 · Shot</button>
+        <button class="filter-pill" onclick="setStageFilter(2, this)">2 · Editing</button>
+        <button class="filter-pill" onclick="setStageFilter(3, this)">3 · Client Review</button>
+        <button class="filter-pill" onclick="setStageFilter(4, this)">4 · Album Design</button>
+        <button class="filter-pill" onclick="setStageFilter(5, this)">5 · Printing</button>
+        <button class="filter-pill" onclick="setStageFilter(6, this)">6 · Validation</button>
+        <button class="filter-pill" onclick="setStageFilter(7, this)">7 · Delivered</button>
+        <div class="filters-right">
+          <select class="sort-select" id="sortSelect" onchange="renderTable()">
+            <option value="date_desc">Newest first</option>
+            <option value="date_asc">Oldest first</option>
+            <option value="stage_asc">Stage ↑</option>
+            <option value="stage_desc">Stage ↓</option>
+            <option value="name_asc">Name A–Z</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Project / Client</th>
+              <th>Wedding Date</th>
+              <th>Current Stage</th>
+              <th>Pipeline</th>
+              <th>Location</th>
+              <th>Last Update</th>
+              <th>Days Active</th>
+            </tr>
+          </thead>
+          <tbody id="projectTableBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display:none">
+          <div class="empty-icon">📭</div>
+          <p>No projects match your filters.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Project Detail Modal ───────────────────────────────── -->
+<div class="modal-overlay" id="detailModal" style="display:none" onclick="closeDetailModal(event)">
+  <div class="modal" id="detailModalContent">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <div class="modal-title" id="dTitle"></div>
+        <div class="modal-sub" id="dSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('timeline')">Timeline</button>
+      <button class="modal-tab" onclick="switchTab('details')">Details</button>
+      <button class="modal-tab" onclick="switchTab('action')">Action</button>
+    </div>
+    <div class="modal-body">
+      <div id="tab-timeline"></div>
+      <div id="tab-details" style="display:none"></div>
+      <div id="tab-action" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Project Modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="newProjModal" style="display:none" onclick="closeDetailModal2(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <div class="modal-title">New Wedding Project</div>
+        <div class="modal-sub">Create a new album tracking project</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('newProjModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="new-proj-grid">
+        <div class="form-group">
+          <label>Project Name *</label>
+          <input type="text" id="np_name" placeholder="e.g. Dupont Wedding 2025"/>
+        </div>
+        <div class="form-group">
+          <label>Client Name(s) *</label>
+          <input type="text" id="np_client" placeholder="e.g. Marie & Pierre Dupont"/>
+        </div>
+        <div class="form-group">
+          <label>Wedding Date *</label>
+          <input type="date" id="np_weddingDate"/>
+        </div>
+        <div class="form-group">
+          <label>Photography Company</label>
+          <input type="text" id="np_company" placeholder="e.g. Lumière Photography"/>
+        </div>
+        <div class="form-group">
+          <label>Wedding Location</label>
+          <input type="text" id="np_location" placeholder="e.g. Paris, France"/>
+        </div>
+        <div class="form-group">
+          <label>Album Type</label>
+          <select id="np_albumType">
+            <option>30x30 cm Premium</option>
+            <option>20x20 cm Standard</option>
+            <option>40x40 cm Deluxe</option>
+            <option>Custom Size</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Number of Albums</label>
+          <input type="number" id="np_qty" value="1" min="1" max="20"/>
+        </div>
+        <div class="form-group">
+          <label>Photographer Name</label>
+          <input type="text" id="np_photographer" placeholder="Name of photographer"/>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="np_notes" rows="2" placeholder="Any special instructions..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('newProjModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createProject()">Create Project</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────
+const STAGES = [
+  { id: 1, label: 'Wedding Shot',       location: 'FR', actor: 'Photographer',     icon: '📸', desc: 'Photographer captures all wedding event photos.' },
+  { id: 2, label: 'Designer Editing',   location: 'IN', actor: 'Designer',          icon: '🎨', desc: 'Designer selects and edits all images from the shoot.' },
+  { id: 3, label: 'Client Selection',   location: 'FR', actor: 'Client',            icon: '💍', desc: 'Wedding couple reviews and selects images from the edited gallery.' },
+  { id: 4, label: 'Album Designed',     location: 'IN', actor: 'Designer',          icon: '📐', desc: 'Designer formats selected images into album-ready print layout.' },
+  { id: 5, label: 'Print Press',        location: 'IN', actor: 'Print Press',       icon: '🖨️', desc: 'Album files sent to print press and physically printed.' },
+  { id: 6, label: 'Validation',         location: 'IN', actor: 'Validation Agent',  icon: '✔️', desc: 'Validation agent inspects printed albums at the press.' },
+  { id: 7, label: 'Delivered',          location: 'FR', actor: 'FedEx Agent',       icon: '📦', desc: 'FedEx collects validated albums and delivers to France.' },
+];
+
+const ROLE_STAGE_MAP = {
+  admin:        [1,2,3,4,5,6,7],
+  photographer: [1],
+  designer:     [2,4],
+  client:       [3],
+  press:        [5],
+  validator:    [6],
+  fedex:        [7],
+};
+
+// ── Sample seed data ──────────────────────────────────────
+let projects = [
+  {
+    id: 'P001',
+    name: 'Laurent & Amélie Wedding',
+    client: 'Laurent & Amélie Moreau',
+    company: 'Lumière Photography',
+    photographer: 'Jean-Claude Renard',
+    weddingDate: '2025-06-14',
+    location: 'Bordeaux, France',
+    albumType: '30x30 cm Premium',
+    qty: 2,
+    notes: 'Priority delivery requested.',
+    stage: 6,
+    createdAt: '2025-06-15',
+    history: [
+      { stage: 1, date: '2025-06-15', actor: 'Jean-Claude Renard',  note: '320 photos uploaded.' },
+      { stage: 2, date: '2025-06-22', actor: 'Priya Sharma',        note: '180 images selected and edited.' },
+      { stage: 3, date: '2025-07-01', actor: 'Amélie Moreau',       note: 'Client selected 120 images.' },
+      { stage: 4, date: '2025-07-10', actor: 'Priya Sharma',        note: 'Album layout approved, sent to press.' },
+      { stage: 5, date: '2025-07-18', actor: 'Rajesh Print House',  note: 'Both albums printed and ready for pickup.' },
+      { stage: 6, date: null,         actor: null,                   note: '' },
+    ]
+  },
+  {
+    id: 'P002',
+    name: 'Dubois Family Wedding',
+    client: 'Sophie & Étienne Dubois',
+    company: 'Fleur de Studio',
+    photographer: 'Marie Fontaine',
+    weddingDate: '2025-05-03',
+    location: 'Lyon, France',
+    albumType: '40x40 cm Deluxe',
+    qty: 1,
+    notes: '',
+    stage: 7,
+    createdAt: '2025-05-04',
+    history: [
+      { stage: 1, date: '2025-05-04', actor: 'Marie Fontaine',      note: '410 photos uploaded.' },
+      { stage: 2, date: '2025-05-12', actor: 'Arjun Mehta',         note: '200 images edited.' },
+      { stage: 3, date: '2025-05-19', actor: 'Sophie Dubois',       note: '140 images selected.' },
+      { stage: 4, date: '2025-05-28', actor: 'Arjun Mehta',         note: 'Album designed and sent to press.' },
+      { stage: 5, date: '2025-06-05', actor: 'Rajesh Print House',  note: 'Album printed.' },
+      { stage: 6, date: '2025-06-07', actor: 'Vikram Nair',         note: 'All pages validated, no issues.' },
+      { stage: 7, date: '2025-06-10', actor: 'FedEx IN-FR',         note: 'Tracking: 7489234891. Delivered to Fleur de Studio.' },
+    ]
+  },
+  {
+    id: 'P003',
+    name: 'Rousseau Spring Wedding',
+    client: 'Camille & Hugo Rousseau',
+    company: 'Lumière Photography',
+    photographer: 'Jean-Claude Renard',
+    weddingDate: '2025-07-20',
+    location: 'Nice, France',
+    albumType: '20x20 cm Standard',
+    qty: 1,
+    notes: 'Client wants rush delivery.',
+    stage: 3,
+    createdAt: '2025-07-21',
+    history: [
+      { stage: 1, date: '2025-07-21', actor: 'Jean-Claude Renard',  note: '280 photos uploaded.' },
+      { stage: 2, date: '2025-07-28', actor: 'Priya Sharma',        note: '160 images edited, gallery shared.' },
+      { stage: 3, date: null,         actor: null,                   note: '' },
+    ]
+  },
+  {
+    id: 'P004',
+    name: 'Bernard Garden Wedding',
+    client: 'Isabelle & François Bernard',
+    company: 'Soleil Studio',
+    photographer: 'Claire Petit',
+    weddingDate: '2025-04-12',
+    location: 'Marseille, France',
+    albumType: '30x30 cm Premium',
+    qty: 3,
+    notes: '3 copies — one for each family.',
+    stage: 4,
+    createdAt: '2025-04-13',
+    history: [
+      { stage: 1, date: '2025-04-13', actor: 'Claire Petit',        note: '350 photos uploaded.' },
+      { stage: 2, date: '2025-04-22', actor: 'Deepak Verma',        note: '190 images edited.' },
+      { stage: 3, date: '2025-04-30', actor: 'Isabelle Bernard',    note: '130 images selected.' },
+      { stage: 4, date: null,         actor: null,                   note: '' },
+    ]
+  },
+  {
+    id: 'P005',
+    name: 'Lefevre Château Wedding',
+    client: 'Juliette & Marc Lefevre',
+    company: 'Lumière Photography',
+    photographer: 'Jean-Claude Renard',
+    weddingDate: '2025-08-02',
+    location: 'Champagne, France',
+    albumType: '40x40 cm Deluxe',
+    qty: 2,
+    notes: '',
+    stage: 1,
+    createdAt: '2025-08-03',
+    history: [
+      { stage: 1, date: null, actor: null, note: '' },
+    ]
+  },
+];
+
+// ── State ─────────────────────────────────────────────────
+let currentView     = 'all';
+let currentStageFilter = 'all';
+let activeProjectId = null;
+let activeTab       = 'timeline';
+
+// ── Helpers ───────────────────────────────────────────────
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+function daysSince(s) {
+  if (!s) return 0;
+  return Math.floor((Date.now() - new Date(s+'T00:00:00')) / 86400000);
+}
+function stageLocation(stageId) {
+  return STAGES[stageId - 1]?.location || '??';
+}
+function getRole() {
+  return document.getElementById('roleSelect').value;
+}
+
+function stageBadgeHTML(stageId) {
+  const s = STAGES[stageId - 1];
+  const cls = stageId === 7 ? 'stage-done' : 'stage-' + stageId;
+  return `<span class="stage-badge ${cls}"><span class="stage-dot"></span>${s.icon} ${s.label}</span>`;
+}
+
+function pipelineHTML(currentStage) {
+  let html = '<div class="pipeline">';
+  for (let i = 1; i <= 7; i++) {
+    const cls = i < currentStage ? 'done' : (i === currentStage ? 'active' : '');
+    html += `<div class="pip-step ${cls}" title="Stage ${i}: ${STAGES[i-1].label}"></div>`;
+    if (i < 7) html += '<div class="pip-sep"></div>';
+  }
+  html += `<span class="pip-label">${currentStage}/7</span></div>`;
+  return html;
+}
+
+function locChip(loc) {
+  return loc === 'FR'
+    ? '<span class="loc-chip loc-fr">🇫🇷 France</span>'
+    : '<span class="loc-chip loc-in">🇮🇳 India</span>';
+}
+
+// ── Filter & view logic ────────────────────────────────────
+function getFilteredProjects() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const role   = getRole();
+  let list = projects;
+
+  // View filter
+  if (currentView === 'active')    list = list.filter(p => p.stage < 7);
+  if (currentView === 'delivered') list = list.filter(p => p.stage === 7);
+  if (currentView === 'france')    list = list.filter(p => stageLocation(p.stage) === 'FR');
+  if (currentView === 'india')     list = list.filter(p => stageLocation(p.stage) === 'IN');
+  if (currentView === 'myaction')  list = list.filter(p => ROLE_STAGE_MAP[role]?.includes(p.stage));
+
+  // Stage filter
+  if (currentStageFilter !== 'all') list = list.filter(p => p.stage === currentStageFilter);
+
+  // Search
+  if (search) list = list.filter(p =>
+    p.name.toLowerCase().includes(search) ||
+    p.client.toLowerCase().includes(search) ||
+    p.company.toLowerCase().includes(search) ||
+    p.id.toLowerCase().includes(search)
+  );
+
+  // Sort
+  const sort = document.getElementById('sortSelect').value;
+  list = [...list];
+  if (sort === 'date_desc') list.sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+  if (sort === 'date_asc')  list.sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+  if (sort === 'stage_asc') list.sort((a,b) => a.stage - b.stage);
+  if (sort === 'stage_desc')list.sort((a,b) => b.stage - a.stage);
+  if (sort === 'name_asc')  list.sort((a,b) => a.name.localeCompare(b.name));
+
+  return list;
+}
+
+// ── Render stats ───────────────────────────────────────────
+function renderStats() {
+  const total     = projects.length;
+  const active    = projects.filter(p => p.stage < 7).length;
+  const delivered = projects.filter(p => p.stage === 7).length;
+  const role = getRole();
+  const myAction  = projects.filter(p => ROLE_STAGE_MAP[role]?.includes(p.stage)).length;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card highlight">
+      <div class="stat-label">Total Projects</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">In Progress</div>
+      <div class="stat-value">${active}</div>
+      <div class="stat-sub">Across all stages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Delivered</div>
+      <div class="stat-value text-done">${delivered}</div>
+      <div class="stat-sub">To France ✓</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Needs My Action</div>
+      <div class="stat-value text-accent">${myAction}</div>
+      <div class="stat-sub">For your role</div>
+    </div>
+  `;
+
+  // Update sidebar badges
+  document.getElementById('badge-all').textContent = total;
+  const badgeActive = document.getElementById('badge-active');
+  if (active > 0) { badgeActive.style.display=''; badgeActive.textContent = active; } else { badgeActive.style.display='none'; }
+  const badgeMy = document.getElementById('badge-myaction');
+  if (myAction > 0) { badgeMy.style.display=''; badgeMy.textContent = myAction; } else { badgeMy.style.display='none'; }
+}
+
+// ── Render table ───────────────────────────────────────────
+function renderTable() {
+  const list = getFilteredProjects();
+  const tbody = document.getElementById('projectTableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = list.map(p => {
+    const loc = stageLocation(p.stage);
+    const lastHist = p.history.filter(h => h.date).slice(-1)[0];
+    const lastDate = lastHist ? fmtDate(lastHist.date) : '—';
+    const days = daysSince(p.createdAt);
+    return `
+      <tr onclick="openProject('${p.id}')">
+        <td>
+          <div class="proj-name">${p.name}</div>
+          <div class="proj-client">${p.client} · <span style="color:var(--muted)">${p.company}</span></div>
+        </td>
+        <td class="proj-date">${fmtDate(p.weddingDate)}</td>
+        <td>${stageBadgeHTML(p.stage)}</td>
+        <td>${pipelineHTML(p.stage)}</td>
+        <td>${locChip(loc)}</td>
+        <td class="proj-date">${lastDate}</td>
+        <td><span style="font-size:12px;color:var(--muted)">${days}d</span></td>
+      </tr>`;
+  }).join('');
+}
+
+// ── Render everything ──────────────────────────────────────
+function render() {
+  renderStats();
+  renderTable();
+}
+
+// ── View switching ─────────────────────────────────────────
+const VIEW_TITLES = {
+  all: 'All Projects', active: 'Active Projects', delivered: 'Delivered Albums',
+  france: 'France Stage', india: 'India Stage', myaction: 'Needs My Action'
+};
+function setView(v) {
+  currentView = v;
+  document.getElementById('viewTitle').textContent = VIEW_TITLES[v] || v;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  render();
+}
+
+function setStageFilter(v, el) {
+  currentStageFilter = v;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function onRoleChange() { render(); }
+
+// ── New Project ────────────────────────────────────────────
+function openNewProject() {
+  document.getElementById('np_weddingDate').value = today();
+  document.getElementById('newProjModal').style.display = 'flex';
+}
+function closeDetailModal2(e) {
+  if (e.target === document.getElementById('newProjModal')) closeModal('newProjModal');
+}
+function createProject() {
+  const name   = document.getElementById('np_name').value.trim();
+  const client = document.getElementById('np_client').value.trim();
+  const wDate  = document.getElementById('np_weddingDate').value;
+  if (!name || !client || !wDate) { alert('Please fill in Project Name, Client Name, and Wedding Date.'); return; }
+
+  const newP = {
+    id: 'P' + String(projects.length + 1).padStart(3, '0'),
+    name,
+    client,
+    company:      document.getElementById('np_company').value.trim() || '—',
+    photographer: document.getElementById('np_photographer').value.trim() || '—',
+    weddingDate:  wDate,
+    location:     document.getElementById('np_location').value.trim() || '—',
+    albumType:    document.getElementById('np_albumType').value,
+    qty:          parseInt(document.getElementById('np_qty').value) || 1,
+    notes:        document.getElementById('np_notes').value.trim(),
+    stage: 1,
+    createdAt: today(),
+    history: [{ stage: 1, date: null, actor: null, note: '' }],
+  };
+  projects.unshift(newP);
+  closeModal('newProjModal');
+  document.getElementById('np_name').value = '';
+  document.getElementById('np_client').value = '';
+  document.getElementById('np_company').value = '';
+  document.getElementById('np_photographer').value = '';
+  document.getElementById('np_location').value = '';
+  document.getElementById('np_notes').value = '';
+  render();
+}
+
+// ── Project detail modal ───────────────────────────────────
+function openProject(id) {
+  activeProjectId = id;
+  activeTab = 'timeline';
+  renderDetailModal();
+  document.getElementById('detailModal').style.display = 'flex';
+}
+function closeDetailModal(e) {
+  if (e.target === document.getElementById('detailModal')) closeModal('detailModal');
+}
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('tab-timeline').style.display = tab === 'timeline' ? '' : 'none';
+  document.getElementById('tab-details').style.display  = tab === 'details'  ? '' : 'none';
+  document.getElementById('tab-action').style.display   = tab === 'action'   ? '' : 'none';
+}
+
+function renderDetailModal() {
+  const p = projects.find(x => x.id === activeProjectId);
+  if (!p) return;
+  const role = getRole();
+
+  document.getElementById('dTitle').textContent = p.name;
+  document.getElementById('dSub').innerHTML   = `${p.client} &nbsp;·&nbsp; ${p.company} &nbsp;·&nbsp; ${p.id}`;
+
+  // ── Timeline tab ──
+  let tl = '<div class="timeline">';
+  STAGES.forEach((s, idx) => {
+    const stageNum = s.id;
+    const histEntry = p.history.find(h => h.stage === stageNum);
+    const isDone   = p.stage > stageNum;
+    const isActive = p.stage === stageNum;
+    const isPending = p.stage < stageNum;
+    const dotCls   = isDone ? 'done' : (isActive ? 'active' : 'pending');
+    const lineCls  = isDone ? 'done' : '';
+    const nameCls  = isPending ? 'pending' : '';
+    const loc      = s.location === 'FR' ? '🇫🇷 France' : '🇮🇳 India';
+
+    tl += `<div class="tl-item">
+      <div class="tl-left">
+        <div class="tl-dot ${dotCls}">${isDone ? '✓' : stageNum}</div>
+        ${idx < 6 ? `<div class="tl-line ${lineCls}"></div>` : ''}
+      </div>
+      <div class="tl-content">
+        <div class="tl-stage-name ${nameCls}">
+          ${s.icon} ${s.label}
+          <span style="font-size:10px;color:var(--muted);font-weight:400">${loc}</span>
+          ${isActive ? '<span style="font-size:10px;background:var(--accent-lt);color:var(--accent);border-radius:10px;padding:1px 8px;font-weight:600">● Current</span>' : ''}
+        </div>
+        <div class="tl-actor">${s.actor}</div>
+        ${histEntry && histEntry.date
+          ? `<div class="tl-meta">Completed ${fmtDate(histEntry.date)}</div>`
+          : (isActive ? `<div class="tl-meta" style="color:var(--accent)">In progress…</div>` : `<div class="tl-meta">Pending</div>`)
+        }
+        ${histEntry && histEntry.note
+          ? `<div class="tl-note">${histEntry.note}</div>`
+          : ''}
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.desc}</div>
+      </div>
+    </div>`;
+  });
+  tl += '</div>';
+  document.getElementById('tab-timeline').innerHTML = tl;
+
+  // ── Details tab ──
+  document.getElementById('tab-details').innerHTML = `
+    <div class="info-grid">
+      <div class="info-item"><div class="info-key">Project ID</div><div class="info-val">${p.id}</div></div>
+      <div class="info-item"><div class="info-key">Created</div><div class="info-val">${fmtDate(p.createdAt)}</div></div>
+      <div class="info-item"><div class="info-key">Client</div><div class="info-val">${p.client}</div></div>
+      <div class="info-item"><div class="info-key">Photography Co.</div><div class="info-val">${p.company}</div></div>
+      <div class="info-item"><div class="info-key">Photographer</div><div class="info-val">${p.photographer}</div></div>
+      <div class="info-item"><div class="info-key">Wedding Date</div><div class="info-val">${fmtDate(p.weddingDate)}</div></div>
+      <div class="info-item"><div class="info-key">Wedding Location</div><div class="info-val">${p.location}</div></div>
+      <div class="info-item"><div class="info-key">Album Type</div><div class="info-val">${p.albumType}</div></div>
+      <div class="info-item"><div class="info-key">Quantity</div><div class="info-val">${p.qty} album${p.qty > 1 ? 's' : ''}</div></div>
+      <div class="info-item"><div class="info-key">Days Active</div><div class="info-val">${daysSince(p.createdAt)} days</div></div>
+      ${p.notes ? `<div class="info-item" style="grid-column:1/-1"><div class="info-key">Notes</div><div class="info-val">${p.notes}</div></div>` : ''}
+    </div>
+  `;
+  document.getElementById('tab-details').style.display = 'none';
+
+  // ── Action tab ──
+  buildActionTab(p, role);
+  document.getElementById('tab-action').style.display = 'none';
+}
+
+function buildActionTab(p, role) {
+  const canAct = ROLE_STAGE_MAP[role]?.includes(p.stage) || role === 'admin';
+  const s = STAGES[p.stage - 1];
+  let html = '';
+
+  if (p.stage === 7) {
+    html = `<div class="alert alert-success">✅ This project is fully completed and delivered.</div>`;
+  } else if (!canAct) {
+    html = `<div class="alert alert-info">ℹ️ The current stage (<strong>${s.label}</strong>) is handled by <strong>${s.actor}</strong>. Switch your role or wait for the next stage.</div>`;
+  } else {
+    html = `
+      <div class="alert alert-warn">⚡ Action needed: <strong>${s.label}</strong> — This is your stage to advance.</div>
+      <div class="action-panel">
+        <h3>Mark Stage ${p.stage} as Complete</h3>
+        <div class="action-row">
+          <div class="form-group">
+            <label>Your Name</label>
+            <input type="text" id="act_actor" placeholder="${s.actor}"/>
+          </div>
+          <div class="form-group">
+            <label>Completion Date</label>
+            <input type="date" id="act_date" value="${today()}"/>
+          </div>
+        </div>
+        ${p.stage === 7 ? `
+        <div class="form-group mt8">
+          <label>FedEx Tracking Number</label>
+          <input type="text" id="act_tracking" placeholder="e.g. 7489234891"/>
+        </div>` : ''}
+        <div class="form-group mt8">
+          <label>Notes / Remarks</label>
+          <textarea id="act_note" rows="2" placeholder="Optional notes for this stage…"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button class="btn btn-primary" onclick="advanceStage()">✓ Mark Complete & Advance</button>
+        </div>
+      </div>
+    `;
+  }
+  document.getElementById('tab-action').innerHTML = html;
+}
+
+function advanceStage() {
+  const p     = projects.find(x => x.id === activeProjectId);
+  if (!p || p.stage >= 7) return;
+  const actor = document.getElementById('act_actor')?.value.trim() || STAGES[p.stage-1].actor;
+  const date  = document.getElementById('act_date')?.value || today();
+  const note  = document.getElementById('act_note')?.value.trim() || '';
+  const tracking = document.getElementById('act_tracking')?.value.trim() || '';
+
+  // Complete current stage
+  let hist = p.history.find(h => h.stage === p.stage);
+  if (hist) { hist.date = date; hist.actor = actor; hist.note = note + (tracking ? ` Tracking: ${tracking}.` : ''); }
+  else { p.history.push({ stage: p.stage, date, actor, note }); }
+
+  // Advance
+  p.stage++;
+  if (p.stage <= 7) {
+    const exists = p.history.find(h => h.stage === p.stage);
+    if (!exists) p.history.push({ stage: p.stage, date: null, actor: null, note: '' });
+  }
+
+  render();
+  renderDetailModal();
+  // Switch to timeline to show progress
+  activeTab = 'timeline';
+  document.querySelectorAll('.modal-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.getElementById('tab-timeline').style.display = '';
+  document.getElementById('tab-details').style.display  = 'none';
+  document.getElementById('tab-action').style.display   = 'none';
+}
+
+// ── Keyboard close ─────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal('detailModal');
+    closeModal('newProjModal');
+  }
+});
+
+// ── Init ───────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
